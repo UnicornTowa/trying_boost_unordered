@@ -65,16 +65,14 @@ void Random_Transfers_u(boost::unordered::unordered_set<Bank_account> &base, uns
 }
 void Fill_Clients_u(boost::unordered::unordered_set<Bank_account> &base, int number) {
     for (int i = 0 ; i < number;) {
-        Bank_account temp;
-        base.insert(temp);
+        base.emplace(Bank_account());
         i++;
     }
 }
 //vector part
 void Fill_Clients_v(vector<Bank_account> &base, int number) {
     for (int i = 0; i < number;) {
-        Bank_account temp;
-        base.push_back(temp);
+        base.emplace_back(Bank_account());
         i++;
     }
 }
@@ -103,14 +101,36 @@ int SIZE_OF_CLIENTS = 5000000;
 int NUMBER_OF_TRANSACTIONS = 10000;
 
 int main() {
+    auto hash = hash_value(Make_to_Compare(2564346));
+    cout << hash << endl;
+    hash = hash_value(Make_to_Compare(2564347));
+    cout << hash << endl;
+    hash = hash_value(Make_to_Compare(2564348));
+    cout << hash << endl;
     cout << "Num of clients = " << SIZE_OF_CLIENTS << endl;
     cout << "Starting unordered_set part" << endl;
     boost::unordered::unordered_set<Bank_account> Clients;
 
     auto start_time = clock();
-    Fill_Clients_u(Clients, SIZE_OF_CLIENTS);
+    Clients.rehash((Clients.size() + 5000000) / Clients.max_load_factor() + 1);
     auto end_time = clock();
+    cout << "Rehash time " << end_time - start_time << endl;
+    cout << Clients.bucket_count() << " buckets" << endl;
+    start_time = clock();
+    Fill_Clients_u(Clients, SIZE_OF_CLIENTS);
+    end_time = clock();
     cout << "It took " << end_time - start_time << " for initiating" << endl;
+
+    {int count_collisions = 0;
+    for (int i = 0; i < Clients.size();) {
+        auto count = Clients.bucket_size(Clients.bucket(Make_to_Compare(i))) > 1;
+        //cout << "Bucket" << Clients.bucket(Make_to_Compare(i)) << " has " << count << " elems" << endl;
+        int one = 1;
+        if (count > one)
+            count_collisions += (count - 1);
+        i++;
+    }
+    cout << count_collisions << " collisions" << endl;}
 
 
     start_time = clock();
@@ -171,6 +191,7 @@ int main() {
     Clients_v.insert(Clients_v.begin() + 3578954, Make_to_Compare(120550259));
     end_time = clock();
     cout << "It took " << end_time - start_time << " for insertion" << endl;
+
 
 
     return 0;
